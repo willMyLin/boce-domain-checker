@@ -139,6 +139,32 @@ chmod +x boce_tool_app_darwin_arm64
 ./boce_tool_app_darwin_arm64
 ```
 
+如果 Mac 提示“文件已损坏”或“无法打开”，通常是下载文件被隔离标记导致，可在解压后的文件目录执行：
+
+```bash
+xattr -dr com.apple.quarantine boce_tool_app_darwin_arm64
+chmod +x boce_tool_app_darwin_arm64
+./boce_tool_app_darwin_arm64
+```
+
+Intel Mac 请把命令里的文件名替换为：
+
+```text
+boce_tool_app_darwin_amd64
+```
+
+如果 zip 解压时就提示损坏，请先确认文件大小和校验值是否一致：
+
+```bash
+shasum -a 256 boce_tool_app_darwin_arm64.zip
+```
+
+校验值见：
+
+```text
+build/release/SHA256SUMS.txt
+```
+
 ## Git 推送提示
 
 如果使用 SSH 推送 GitHub 时遇到 22 端口被拦截，可以让 GitHub SSH 走 443 端口：
