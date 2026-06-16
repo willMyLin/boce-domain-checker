@@ -118,12 +118,25 @@ wails build -platform windows/amd64 -nopackage
 build/bin
 ```
 
-产物对应关系：
+已压缩好的发布包位于：
 
 ```text
-.exe          Windows
-darwin_amd64  Intel Mac
-darwin_arm64  Apple Silicon Mac
+build/release
+```
+
+发布包对应关系：
+
+```text
+boce_tool_app_windows_amd64.zip  Windows 64 位
+boce_tool_app_darwin_amd64.zip   Intel Mac
+boce_tool_app_darwin_arm64.zip   Apple Silicon Mac
+```
+
+Mac 下载 zip 解压后，如提示没有执行权限，可执行：
+
+```bash
+chmod +x boce_tool_app_darwin_arm64
+./boce_tool_app_darwin_arm64
 ```
 
 ## Git 推送提示
