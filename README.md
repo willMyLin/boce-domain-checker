@@ -1,12 +1,157 @@
-# README
-1、使用 go + wails  构建的一个boce小工具, apiKey 可以从www.boce.com 获取.目前支持的功能有: 污染检测、qq拦截检测、微信拦截检测、备案查询、备案黑名单查询、背墙检测
-2、编译命令: https://wails.io/zh-Hans/docs/gettingstarted/installation
-wails build -platform darwin/arm64
-wails build -platform darwin/amd64
-wails build -platform windows/amd64
-wails build -platform linux/amd64
+# BOCE Tool App
 
-3、已经编译好的在 build/bin
-        .exe  windows 系统
-        darwin_amd64  mac intel 芯片
-        darwin_arm64  mac m 芯片
+一个基于 Go + Wails + Vue 构建的 BOCE 桌面检测工具，用于批量检测域名状态。API Key 可在 [BOCE 官网](https://www.boce.com) 申请。
+
+## 功能
+
+- DNS 污染检测
+- QQ 拦截检测
+- 微信拦截检测
+- ICP 备案查询
+- 备案黑名单检测
+- 被墙检测
+- TXT 批量导入检测目标
+- 按状态筛选检测结果
+- 导出当前列表为 Excel
+
+## 接口说明
+
+当前 BOCE 请求会统一携带以下参数：
+
+```text
+key=申请的 API Key
+host=检测目标，多个域名用英文逗号分隔
+from=app
+```
+
+已接入的 BOCE API：
+
+```text
+/v3/task/create/pollute
+/v3/task/create/qq
+/v3/task/create/wechat
+/v3/task/create/icp
+/v3/task/create/blacklist
+/v3/task/create/wall
+```
+
+## 开发环境
+
+需要先安装：
+
+- Go
+- Node.js / npm
+- Wails CLI v2
+
+Wails 安装文档：
+
+https://wails.io/zh-Hans/docs/gettingstarted/installation
+
+安装前端依赖：
+
+```bash
+cd frontend
+npm install
+```
+
+回到项目根目录运行开发模式：
+
+```bash
+cd ..
+wails dev
+```
+
+## 测试
+
+运行后端测试：
+
+```bash
+go test ./...
+```
+
+构建前端：
+
+```bash
+cd frontend
+npm run build
+```
+
+## 构建
+
+在项目根目录执行：
+
+```bash
+wails build
+```
+
+按平台构建：
+
+```bash
+# Apple Silicon Mac: M1 / M2 / M3 / M4
+wails build -platform darwin/arm64
+
+# Intel Mac
+wails build -platform darwin/amd64
+
+# Windows 64 位
+wails build -platform windows/amd64
+
+# Linux 64 位
+wails build -platform linux/amd64
+```
+
+也可以一次指定多个平台：
+
+```bash
+wails build -platform darwin/amd64,darwin/arm64,windows/amd64
+```
+
+只编译、不生成平台安装包：
+
+```bash
+wails build -platform windows/amd64 -nopackage
+```
+
+构建产物默认输出到：
+
+```text
+build/bin
+```
+
+产物对应关系：
+
+```text
+.exe          Windows
+darwin_amd64  Intel Mac
+darwin_arm64  Apple Silicon Mac
+```
+
+## Git 推送提示
+
+如果使用 SSH 推送 GitHub 时遇到 22 端口被拦截，可以让 GitHub SSH 走 443 端口：
+
+```sshconfig
+Host github.com
+  HostName ssh.github.com
+  User git
+  Port 443
+```
+
+然后执行：
+
+```bash
+git push -u origin main
+```
+
+## 目录结构
+
+```text
+.
+├── app.go              # Wails 后端逻辑和 BOCE API 调用
+├── app_test.go         # 后端测试
+├── frontend/           # Vue 前端
+├── build/              # 图标、平台配置和构建产物目录
+├── main.go             # 应用入口
+├── wails.json          # Wails 配置
+└── README.md
+```
