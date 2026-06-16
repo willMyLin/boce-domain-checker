@@ -14,6 +14,10 @@
 - 按状态筛选检测结果
 - 导出当前列表为 Excel
 
+## 界面预览
+
+![BOCE 检测工具界面](docs/images/app-screenshot.png)
+
 ## 接口说明
 
 当前 BOCE 请求会统一携带以下参数：
