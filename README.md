@@ -25,7 +25,6 @@
 ```text
 key=申请的 API Key
 host=检测目标，多个域名用英文逗号分隔
-from=app
 ```
 
 已接入的 BOCE API：
@@ -110,11 +109,6 @@ wails build -platform linux/amd64
 wails build -platform darwin/amd64,darwin/arm64,windows/amd64
 ```
 
-只编译、不生成平台安装包：
-
-```bash
-wails build -platform windows/amd64 -nopackage
-```
 
 构建产物默认输出到：
 
@@ -167,24 +161,6 @@ shasum -a 256 boce_tool_app_darwin_arm64.zip
 ```text
 build/release/SHA256SUMS.txt
 ```
-
-## Git 推送提示
-
-如果使用 SSH 推送 GitHub 时遇到 22 端口被拦截，可以让 GitHub SSH 走 443 端口：
-
-```sshconfig
-Host github.com
-  HostName ssh.github.com
-  User git
-  Port 443
-```
-
-然后执行：
-
-```bash
-git push -u origin main
-```
-
 ## 目录结构
 
 ```text
