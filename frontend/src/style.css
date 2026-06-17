@@ -55,6 +55,8 @@ button {
 }
 
 .options-bar {
+  flex-wrap: wrap;
+  row-gap: 8px;
   margin-bottom: 12px;
 }
 
