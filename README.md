@@ -140,8 +140,7 @@ chmod +x boce_tool_app_darwin_arm64
 如果 Mac 提示“文件已损坏”或“无法打开”，通常是下载文件被隔离标记导致，可在解压后的文件目录执行：
 
 ```bash
-xattr -dr com.apple.quarantine boce_tool_app_darwin_arm64
-./boce_tool_app_darwin_arm64
+xattr -dr com.apple.quarantine 文件名
 ```
 
 Intel Mac 请把命令里的文件名替换为：
