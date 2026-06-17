@@ -1,4 +1,4 @@
-# BOCE Tool App
+# BOCE 域名检测工具 - DNS 污染检测 / QQ 微信拦截 / ICP 备案查询 / 被墙检测
 
 一个基于 Go + Wails + Vue 构建的 BOCE 桌面检测工具，用于批量检测域名状态。API Key 可在 [BOCE 官网](https://www.boce.com) 申请。
 
@@ -16,9 +16,9 @@
 
 ## 界面预览
 
-<a href="https://github.com/user-attachments/assets/7be5ad3c-58b2-4cbd-9ff4-77ae023302a7" target="_blank" rel="noopener noreferrer">
-  <img src="https://github.com/user-attachments/assets/7be5ad3c-58b2-4cbd-9ff4-77ae023302a7" alt="BOCE 检测工具界面">
-</a>
+![BOCE 检测工具界面](https://github.com/user-attachments/assets/7be5ad3c-58b2-4cbd-9ff4-77ae023302a7)
+
+[查看原图](https://github.com/user-attachments/assets/7be5ad3c-58b2-4cbd-9ff4-77ae023302a7)
 
 ## 接口说明
 
