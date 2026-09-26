@@ -44,41 +44,65 @@ host=检测目标，多个域名用英文逗号分隔
 
 需要先安装：
 
-- Go
-- Node.js / npm
-- Wails CLI v2
+- Go 1.26+
+- Node.js >= 22.12.0（版本见根目录 `.nvmrc`）
+- GNU Make
 
-Wails 安装文档：
+Wails CLI 不用手动安装，`make deps-go` 会钉死版本装好。Wails 安装文档：
 
 https://wails.io/zh-Hans/docs/gettingstarted/installation
 
-安装前端依赖：
+安装依赖（Go 依赖、Wails CLI、前端依赖）：
 
 ```bash
-cd frontend
-npm install
+make deps-go
+make deps-fe
 ```
 
-回到项目根目录运行开发模式：
+回到项目根目录运行开发模式（热更新）：
 
 ```bash
-cd ..
-wails dev
+make dev
+```
+
+其它常用入口：
+
+```bash
+make help    # 列出全部 target
+make fmt     # gofmt 格式化
+make clean   # 清理构建产物
 ```
 
 ## 测试
 
-运行后端测试：
+跑 PR 门禁一条命令（`go vet` + 后端测试 + `golangci-lint` + 漏洞扫描）：
 
 ```bash
-go test ./...
+make check
 ```
 
-构建前端：
+只跑后端测试：
 
 ```bash
-cd frontend
-npm run build
+make test
+```
+
+只跑静态检查：
+
+```bash
+make lint
+```
+
+漏洞扫描（Go `govulncheck` + `npm audit`）：
+
+```bash
+make audit
+```
+
+构建前端（产出 `frontend/dist`；`go build` / `go test` 依赖它，Makefile 已把这层依赖显式化）：
+
+```bash
+make frontend
 ```
 
 ## 构建

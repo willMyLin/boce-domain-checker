@@ -1,0 +1,15 @@
+# Go 静态检查基线（计划 004）
+#
+# 本机 golangci-lint 为 v1.x（v1.64.8），故使用 v1 配置格式。
+# 若将来升到 golangci-lint v2，需要改写为 version: "2" 的新格式。
+
+run:
+  timeout: 5m
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused

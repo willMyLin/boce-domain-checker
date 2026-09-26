@@ -7,3 +7,5 @@ export function ExportPollutionExcel(arg1:Array<main.DetectRow>):Promise<main.Ex
 export function ImportTXT():Promise<main.ImportResponse>;
 
 export function StartDetection(arg1:main.DetectRequest):Promise<main.DetectResponse>;
+
+export function ValidateTargets(arg1:string):Promise<main.ValidateTargetsResponse>;

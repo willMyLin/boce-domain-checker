@@ -4,8 +4,10 @@ import {
   ExportPollutionExcel,
   ImportTXT,
   StartDetection,
+  ValidateTargets,
 } from './api/boce'
 import {EventsOn} from '../wailsjs/runtime/runtime'
+import {ABNORMAL_STATUSES, STATUS_BAD_DOMAIN, STATUS_BLACKLISTED, STATUS_FAILED, STATUS_FILED, STATUS_INTERCEPTED, STATUS_LIST, STATUS_NORMAL, STATUS_POLLUTION, STATUS_SUSPECT_WALLED, STATUS_UNFILED, STATUS_UNREGISTERED, STATUS_UNKNOWN, STATUS_WALLED} from './lib/constants'
 
 const rows = ref([])
 const selectedId = ref(null)
@@ -37,7 +39,7 @@ const summary = reactive({
 })
 
 const canPause = computed(() => running.value && rows.value.length > 0)
-const statusOrder = ['污染', '拦截', '未备案', '黑名单', '被墙', '疑似被墙', '域名格式错误', '正常', '已备案', '未注册', '失败', '未知']
+const statusOrder = STATUS_LIST
 const statusOptions = computed(() => {
   const statuses = [...new Set(rows.value.map(row => row.status).filter(Boolean))]
   statuses.sort((left, right) => {
@@ -75,7 +77,7 @@ const loadingText = computed(() => {
 })
 
 function isAbnormalStatus(status) {
-  return ['污染', '拦截', '未备案', '黑名单', '被墙', '疑似被墙', '域名格式错误', '失败', '未知'].includes(status)
+  return ABNORMAL_STATUSES.includes(status)
 }
 
 function matchStatusFilter(status) {
@@ -94,100 +96,22 @@ function keepValidStatusFilter() {
   }
 }
 
-function parseTargetText(text) {
-  return parseTargetEntries(text).validTargets
-}
-
-function parseTargetEntries(text) {
-  const seen = new Set()
-  const invalidTargets = []
-  const validTargets = []
-
-  text
-    .split(/[\s,;，；]+/)
-    .map(item => item.trim().replace(/^['"]|['"]$/g, ''))
-    .filter(Boolean)
-    .forEach(item => {
-      const normalized = normalizeTarget(item)
-      if (!normalized) {
-        invalidTargets.push(item)
-        return
-      }
-      if (!seen.has(normalized)) {
-        seen.add(normalized)
-        validTargets.push(normalized)
-      }
-    })
-
-  return {validTargets, invalidTargets}
-}
-
-function normalizeTarget(input) {
-  const raw = input.trim()
-  if (!raw || /[\s@]/.test(raw)) {
-    return ''
-  }
-
-  let targetURL
-  try {
-    if (/^https?:\/\//i.test(raw)) {
-      targetURL = new URL(raw)
-    } else if (/^[a-z][a-z\d+.-]*:\/\//i.test(raw)) {
-      return ''
-    } else {
-      targetURL = new URL(`http://${raw.replace(/^\/+|\/+$/g, '')}`)
-    }
-  } catch {
-    return ''
-  }
-
-  const host = targetURL.hostname.toLowerCase()
-  if (!isValidHost(host)) {
-    return ''
-  }
-  return host
-}
-
-function isValidHost(host) {
-  if (isValidIPv4(host)) {
-    return true
-  }
-  if (host.length > 253 || !host.includes('.') || host.includes('..')) {
-    return false
-  }
-
-  const labels = host.split('.')
-  const topLabel = labels.at(-1)
-  return labels.every(label => (
-    label.length > 0 &&
-    label.length <= 63 &&
-    /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label)
-  )) && topLabel.length >= 2 && /[a-z]/i.test(topLabel)
-}
-
-function isValidIPv4(host) {
-  const parts = host.split('.')
-  return parts.length === 4 && parts.every(part => {
-    if (!/^\d{1,3}$/.test(part)) {
-      return false
-    }
-    const value = Number(part)
-    return value >= 0 && value <= 255 && String(value) === part
-  })
-}
-
-function validateTargetText() {
-  const result = parseTargetEntries(targetText.value)
-  if (result.invalidTargets.length) {
-    const examples = result.invalidTargets.slice(0, 3).join('、')
-    const rest = result.invalidTargets.length > 3 ? ` 等 ${result.invalidTargets.length} 条` : ''
+// 最终判定以 Go 侧 ValidateTargets 为准：前端只负责把返回的 invalid 拼进提示文案，
+// 不再自己决定某个域名合不合法（TXT 导入也走同一套 Go 规则）。
+async function validateTargetText() {
+  const result = await ValidateTargets(targetText.value)
+  const validTargets = result.valid || []
+  const invalidTargets = result.invalid || []
+  if (invalidTargets.length) {
+    const examples = invalidTargets.slice(0, 3).join('、')
+    const rest = invalidTargets.length > 3 ? ` 等 ${invalidTargets.length} 条` : ''
     return {
       ok: false,
-      targets: result.validTargets,
+      targets: validTargets,
       message: `检测目标格式错误: ${examples}${rest}`,
     }
   }
-  if (targetText.value.trim() && result.validTargets.length === 0) {
+  if (targetText.value.trim() && validTargets.length === 0) {
     return {
       ok: false,
       targets: [],
@@ -196,7 +120,7 @@ function validateTargetText() {
   }
   return {
     ok: true,
-    targets: result.validTargets,
+    targets: validTargets,
     message: '',
   }
 }
@@ -205,13 +129,13 @@ function summarizeRows(targetRows) {
   return targetRows.reduce((nextSummary, row) => {
     nextSummary.total += 1
     nextSummary.checked += 1
-    if (row.status === '污染' || row.status === '拦截' || row.status === '未备案' || row.status === '黑名单' || row.status === '被墙' || row.status === '疑似被墙' || row.status === '域名格式错误') {
+    if (row.status === STATUS_POLLUTION || row.status === STATUS_INTERCEPTED || row.status === STATUS_UNFILED || row.status === STATUS_BLACKLISTED || row.status === STATUS_WALLED || row.status === STATUS_SUSPECT_WALLED || row.status === STATUS_BAD_DOMAIN) {
       nextSummary.pollution += 1
-    } else if (row.status === '正常' || row.status === '已备案') {
+    } else if (row.status === STATUS_NORMAL || row.status === STATUS_FILED) {
       nextSummary.normal += 1
-    } else if (row.status === '未注册') {
+    } else if (row.status === STATUS_UNREGISTERED) {
       nextSummary.unregistered += 1
-    } else if (row.status === '失败') {
+    } else if (row.status === STATUS_FAILED || row.status === STATUS_UNKNOWN) {
       nextSummary.failed += 1
     }
     return nextSummary
@@ -289,7 +213,7 @@ async function importTxt() {
 }
 
 async function startDetection() {
-  const validation = validateTargetText()
+  const validation = await validateTargetText()
   targetError.value = validation.message
   if (!validation.ok) {
     notice.value = validation.message
@@ -316,7 +240,6 @@ async function startDetection() {
     enableWall: form.detectionType === 'wall',
     concurrency: Number(form.concurrency),
     timeoutSeconds: Number(form.timeoutSeconds),
-    importedTargetCount: targets.length,
     targets,
   })
 

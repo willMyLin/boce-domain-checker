@@ -10,7 +10,6 @@ export namespace main {
 	    enableWall: boolean;
 	    concurrency: number;
 	    timeoutSeconds: number;
-	    importedTargetCount: number;
 	    targets: string[];
 	
 	    static createFrom(source: any = {}) {
@@ -28,7 +27,6 @@ export namespace main {
 	        this.enableWall = source["enableWall"];
 	        this.concurrency = source["concurrency"];
 	        this.timeoutSeconds = source["timeoutSeconds"];
-	        this.importedTargetCount = source["importedTargetCount"];
 	        this.targets = source["targets"];
 	    }
 	}
@@ -150,6 +148,22 @@ export namespace main {
 	        this.targets = source["targets"];
 	        this.message = source["message"];
 	        this.canceled = source["canceled"];
+	    }
+	}
+	export class ValidateTargetsResponse {
+	    valid: string[];
+	    invalid: string[];
+	    message: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ValidateTargetsResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.valid = source["valid"];
+	        this.invalid = source["invalid"];
+	        this.message = source["message"];
 	    }
 	}
 
