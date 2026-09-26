@@ -44,73 +44,92 @@ host=检测目标，多个域名用英文逗号分隔
 
 需要先安装：
 
-- Go
-- Node.js / npm
-- Wails CLI v2
+- Go 1.26+
+- Node.js >= 22.12.0（版本见根目录 `.nvmrc`）
+- GNU Make
 
-Wails 安装文档：
+Wails CLI 不用手动安装，`make deps-go` 会钉死版本装好。Wails 安装文档：
 
 https://wails.io/zh-Hans/docs/gettingstarted/installation
 
-安装前端依赖：
+安装依赖（Go 依赖、Wails CLI、前端依赖）：
 
 ```bash
-cd frontend
-npm install
+make deps-go
+make deps-fe
 ```
 
-回到项目根目录运行开发模式：
+回到项目根目录运行开发模式（热更新）：
 
 ```bash
-cd ..
-wails dev
+make dev
+```
+
+其它常用入口：
+
+```bash
+make help    # 列出全部 target
+make fmt     # gofmt 格式化
+make clean   # 清理构建产物
 ```
 
 ## 测试
 
-运行后端测试：
+跑 PR 门禁一条命令（`go vet` + 后端测试 + `golangci-lint` + 漏洞扫描）：
 
 ```bash
-go test ./...
+make check
 ```
 
-构建前端：
+只跑后端测试：
 
 ```bash
-cd frontend
-npm run build
+make test
+```
+
+只跑静态检查：
+
+```bash
+make lint
+```
+
+漏洞扫描（Go `govulncheck` + `npm audit`）：
+
+```bash
+make audit
+```
+
+构建前端（产出 `frontend/dist`；`go build` / `go test` 依赖它，Makefile 已把这层依赖显式化）：
+
+```bash
+make frontend
 ```
 
 ## 构建
 
-在项目根目录执行：
+按平台构建（**一平台一次**，不要一次指定多个平台）：
 
 ```bash
-wails build
+make build-darwin-arm64   # macOS Apple Silicon（M 系列）→ build/bin/boce_tool_app.app
+make build-darwin-amd64   # macOS Intel            → build/bin/boce_tool_app.app
+make build-windows-amd64  # Windows 64 位          → build/bin/boce_tool_app.exe
+make build-all            # 串行构建上面三个
 ```
 
-按平台构建：
+等价的 wails 命令：
 
 ```bash
-# Apple Silicon Mac: M1 / M2 / M3 / M4
-wails build -platform darwin/arm64
-
-# Intel Mac
-wails build -platform darwin/amd64
-
-# Windows 64 位
-wails build -platform windows/amd64
-
-# Linux 64 位
-wails build -platform linux/amd64
+wails build -clean -platform darwin/arm64 -m -nosyncgomod
+wails build -clean -platform darwin/amd64 -m -nosyncgomod
+wails build -clean -platform windows/amd64 -m -nosyncgomod
 ```
 
-也可以一次指定多个平台：
-
-```bash
-wails build -platform darwin/amd64,darwin/arm64,windows/amd64
-```
-
+> **不要**写成 `wails build -platform darwin/amd64,darwin/arm64,windows/amd64`：
+> 多 target 会产出带连字符的文件名（如 `boce_tool_app-darwin-arm64`），与下面的
+> 发布物命名契约对不上；而且 `-clean` 只对第一个平台生效，产物会串台。
+>
+> **Linux 目前没有构建 target**：`wails build -platform linux/amd64` **仅限 Linux 主机**，
+> 从 macOS 执行只打印一行 warning 就静默跳过（exit 0、无产物）。
 
 构建产物默认输出到：
 
@@ -118,40 +137,82 @@ wails build -platform darwin/amd64,darwin/arm64,windows/amd64
 build/bin
 ```
 
+### 发布物说明
+
+```bash
+make release   # 注入版本 → 三平台构建 → 打包 → 校验和
+```
+
+`make release` 在 `build/release/` 下产出（文件名是对外契约，请勿改动）：
+
+```text
+build/release/
+├── boce_tool_app_darwin_arm64.zip   # 内含 boce_tool_app.app + fix_mac_quarantine.sh
+├── boce_tool_app_darwin_arm64.dmg   # 推荐给 Mac 用户，可直接拖进「应用程序」
+├── boce_tool_app_darwin_amd64.zip   # 内含 boce_tool_app.app + fix_mac_quarantine.sh
+├── boce_tool_app_darwin_amd64.dmg
+├── boce_tool_app_windows_amd64.zip  # 内含 boce_tool_app.exe
+└── SHA256SUMS.txt
+```
+
+版本号注入有两条独立通道，都由 `make release` 完成：
+
+- OS 级元数据：`wails.json` 的 `info.productVersion`（`wails build` 没有任何 flag 能覆盖它，
+  `release` target 会临时把它改成 `git describe` 的结果，构建结束后自动还原）。
+- 进程内字符串：`-ldflags "-X main.Version=..."`，供界面「关于」对话框显示。
+
 已压缩好的发布包可在 GitHub Release 下载：
 
 [https://github.com/willMyLin/boce-domain-checker/releases/latest](https://github.com/willMyLin/boce-domain-checker/releases/latest)
 
-Mac 下载 zip 解压后，如提示没有执行权限，可执行：
+## Mac 使用与排障
+
+下载 DMG 打开后，把 `BOCE 检测工具` 拖进「应用程序」，再从「应用程序」双击启动；
+也可以在解压出来的目录里执行：
 
 ```bash
-chmod +x boce_tool_app_darwin_arm64
-./boce_tool_app_darwin_arm64
+open boce_tool_app.app
 ```
 
-如果 Mac 提示“文件已损坏”或“无法打开”，通常是下载文件被隔离标记导致，可在解压后的文件目录执行：
+> 发布物是 **`.app` 应用包**，不是裸二进制：没有 `chmod +x` 这一步，
+> 也不要 `./boce_tool_app_darwin_arm64` 这样直接跑。
+
+如果 Mac 提示「文件已损坏」或「无法打开」，是下载文件被 Gatekeeper 隔离标记导致。
+在解压后的文件目录执行：
 
 ```bash
-xattr -dr com.apple.quarantine 文件名
+xattr -dr com.apple.quarantine boce_tool_app.app
 ```
 
-Intel Mac 请把命令里的文件名替换为：
+或直接运行同目录下自带的脚本：
+
+```bash
+./fix_mac_quarantine.sh
+```
+
+> **DMG 不解决 Gatekeeper 隔离**。DMG 只是容器格式，未签名应用从 DMG 拖出来后仍会被拦，
+> 未签名应用仍需此步骤。Apple Developer ID 签名 + 公证已明确延后，落地之前这一步不可省略。
+
+Apple Silicon 与 Intel Mac 的命令相同（两边的应用都叫 `boce_tool_app.app`）。
+
+如果 zip / dmg 解压时就提示损坏，请先确认文件大小和校验值是否一致：
+
+```bash
+shasum -a 256 boce_tool_app_darwin_arm64.dmg
+```
+
+校验值见（构建时写入 `build/release/SHA256SUMS.txt`，随 Release 一起发布）：
 
 ```text
-boce_tool_app_darwin_amd64
+SHA256SUMS.txt
 ```
 
-如果 zip 解压时就提示损坏，请先确认文件大小和校验值是否一致：
+在发布物所在目录一次校验全部文件（`SHA256SUMS.txt` 是 `<hash>  <文件名>`，两个空格）：
 
 ```bash
-shasum -a 256 boce_tool_app_darwin_arm64.zip
+shasum -a 256 -c SHA256SUMS.txt
 ```
 
-校验值见：
-
-```text
-build/release/SHA256SUMS.txt
-```
 ## 目录结构
 
 ```text

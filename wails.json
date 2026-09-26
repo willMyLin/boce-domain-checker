@@ -9,5 +9,11 @@
   "author": {
     "name": "lingh",
     "email": "1821299251@qq.com"
+  },
+  "info": {
+    "companyName": "lingh",
+    "productName": "BOCE 检测工具",
+    "productVersion": "1.0.0",
+    "copyright": ""
   }
 }

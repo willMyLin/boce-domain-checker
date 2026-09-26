@@ -1,0 +1,27 @@
+# 依赖自动更新（计划 004）
+#
+# 两个 ecosystem：
+#   - gomod  → 仓库根目录的 go.mod / go.sum
+#   - npm    → /frontend 的 package.json / package-lock.json
+# 均为每周一检查一次。升级仍需人工评审合并，不自动 merge。
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - go
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - javascript

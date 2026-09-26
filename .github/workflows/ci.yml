@@ -1,0 +1,62 @@
+# PR 门禁（计划 007）：make frontend + make check
+#
+# 【为什么是 macos-latest 而不是 ubuntu-latest】
+#   go vet / go test 会编译 wails v2 运行时；linux 构建需要 webkit2gtk + gtk3 的
+#   头文件与 cgo，Ubuntu 24.04 还要额外加 -tags webkit2_41。macOS runner 自带
+#   Xcode 命令行工具，直接可用，也不需要 GUI / 显示器（wails build 只跑 go build + 打包）。
+#
+# 【Wails 项目 CI 特有注意点】
+#   - wails CLI 钉死 @v2.16.0，不要 @latest（会与 go.mod 的 wails 模块版本漂移）。
+#     本 job 不构建应用，只在 release.yml 里装。
+#   - NODE_OPTIONS 必须放开 heap，否则 vite 构建 OOM。
+#   - 一切 go 命令前先 npm run build（//go:embed all:frontend/dist）。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+jobs:
+  check:
+    name: make check
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: 安装前端依赖（走 package-lock.json，可复现）
+        run: npm ci
+        working-directory: frontend
+
+      - name: 安装 govulncheck（make audit 用，版本与 Makefile 对齐）
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.8.0
+
+      - name: 安装 golangci-lint（版本与 .golangci.yml 的 v1 配置格式对齐）
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+            | sh -s -- -b "$(go env GOPATH)/bin" v1.64.8
+          golangci-lint version
+
+      - name: 构建前端（//go:embed 的硬前置）
+        run: make frontend
+
+      - name: PR 门禁（vet + test + lint + audit）
+        run: make check

@@ -1,0 +1,121 @@
+# tag 触发的发布流水线（计划 007）
+#
+# 按平台分 runner：macos-latest 出两个 darwin，windows-latest 出 windows。
+# 不在 macos runner 上跑 linux target（wails 从 macOS 交叉编译 linux 会静默跳过）。
+#
+# 命名契约在 Makefile 的 package-darwin / package-windows 里，本文件只负责
+# 「构建 → 上传 → 汇总 → 挂到 Release」，不要在这里重复写 zip / dmg 文件名。
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  # vite 构建会 OOM，必须放开 heap
+  NODE_OPTIONS: "--max-old-space-size=4096"
+  # wails CLI 钉死版本，不要用 @latest
+  WAILS_CLI_VERSION: v2.16.0
+
+jobs:
+  darwin:
+    name: macOS (arm64 + amd64)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: 安装前端依赖
+        run: npm ci
+        working-directory: frontend
+
+      - name: 安装 wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_CLI_VERSION}
+
+      - name: 构建 + 打包两个 macOS 平台（zip + DMG）
+        run: make VERSION="${GITHUB_REF_NAME}" package-darwin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: darwin
+          path: build/release/*
+          if-no-files-found: error
+
+  windows:
+    name: Windows (amd64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: 安装前端依赖
+        run: npm ci
+        working-directory: frontend
+
+      - name: 安装 wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_CLI_VERSION}
+
+      - name: 安装 GNU make 与 zip（Windows runner 默认不一定提供）
+        shell: pwsh
+        run: |
+          foreach ($tool in @('make', 'zip')) {
+            if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
+              choco install $tool -y --no-progress
+            }
+          }
+          make --version
+          zip -v | Select-Object -First 1
+
+      - name: 构建 + 打包 Windows 平台（zip）
+        shell: bash
+        run: make VERSION="${GITHUB_REF_NAME}" package-windows
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: build/release/*
+          if-no-files-found: error
+
+  publish:
+    name: 校验和 + 挂到 Release
+    needs: [darwin, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: build/release
+          merge-multiple: true
+
+      - name: 生成 SHA256SUMS.txt
+        run: make checksums
+
+      - name: 创建 GitHub Release 并上传发布物
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/release/*
+          generate_release_notes: true

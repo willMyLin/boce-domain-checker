@@ -15,7 +15,7 @@ func TestParseTargetsText(t *testing.T) {
 	content := "\ufeffhttps://www.baidu.com/path\nboce.com, example.com；http://foo.test"
 	want := []string{"www.baidu.com", "boce.com", "example.com", "foo.test"}
 
-	got := parseTargetsText(content)
+	got := parseTargetsText(content).Valid
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("parseTargetsText() = %#v, want %#v", got, want)
 	}
@@ -25,7 +25,7 @@ func TestParseTargetsTextDeduplicates(t *testing.T) {
 	content := "www.baidu.com\nhttps://www.baidu.com/search?q=1\n"
 	want := []string{"www.baidu.com"}
 
-	got := parseTargetsText(content)
+	got := parseTargetsText(content).Valid
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("parseTargetsText() = %#v, want %#v", got, want)
 	}

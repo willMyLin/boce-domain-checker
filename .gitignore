@@ -4,3 +4,5 @@ build/bin/
 build/release/
 .gocache/
 .DS_Store
+boce_tool_app
+boce_tool_app.exe
