@@ -1,0 +1,27 @@
+# Go 静态检查基线（计划 004）
+#
+# 本机 golangci-lint 为 v1.x（v1.64.8），故使用 v1 配置格式。
+# 若将来升到 golangci-lint v2，需要改写为 version: "2" 的新格式。
+
+run:
+  timeout: 5m
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+
+issues:
+  exclude-rules:
+    # 【临时豁免 · 等 plans/003 清理后删除本条】
+    # app.go 里的 queryPollution / bocePolluteResponse 是未接线的「污染检测」残留
+    # （实际生效路径是 queryPollutionBatch）。删源码属 plans/003 的清理范围，
+    # 计划 004 明确不许改源码，故在此临时压掉 unused，让 make check 能作为门禁使用。
+    # 003 删掉这两个符号后，请把整条 exclude-rules 删掉，让 unused 重新生效。
+    - path: '^(app|boce_client|boce_types)\.go$'
+      linters:
+        - unused
+      text: "queryPollution|bocePolluteResponse"
