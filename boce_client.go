@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,13 +9,12 @@ import (
 	"strings"
 )
 
-const boceBatchSize = 20
+const (
+	boceBaseURL   = "https://api.boce.com/v3/"
+	boceBatchSize = 20
+)
 
-// boceBaseURL 是 BOCE API 根地址。做成变量而不是常量，是为了让 boce_client_test.go
-// 能把请求指到 net/http/httptest 假服务器；生产取值不变。
-var boceBaseURL = "https://api.boce.com/v3/"
-
-func queryPollution(ctx context.Context, client *http.Client, apiKey string, host string) (int, error) {
+func queryPollution(client *http.Client, apiKey string, host string) (int, error) {
 	endpoint, err := url.Parse(boceBaseURL + "task/create/pollute")
 	if err != nil {
 		return 0, err
@@ -26,11 +24,7 @@ func queryPollution(ctx context.Context, client *http.Client, apiKey string, hos
 	setBoceTaskQuery(query, apiKey, host)
 	endpoint.RawQuery = query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
-	if err != nil {
-		return 0, err
-	}
-	resp, err := client.Do(req)
+	resp, err := client.Get(endpoint.String())
 	if err != nil {
 		return 0, err
 	}
@@ -61,27 +55,27 @@ func queryPollution(ctx context.Context, client *http.Client, apiKey string, hos
 	return 0, fmt.Errorf("响应缺少检测结果")
 }
 
-func queryQQBatch(ctx context.Context, client *http.Client, apiKey string, hosts []string) (map[string]int, error) {
-	return queryBlockBatch(ctx, client, apiKey, hosts, "task/create/qq")
+func queryQQBatch(client *http.Client, apiKey string, hosts []string) (map[string]int, error) {
+	return queryBlockBatch(client, apiKey, hosts, "task/create/qq")
 }
 
-func queryPollutionBatch(ctx context.Context, client *http.Client, apiKey string, hosts []string) (map[string]int, error) {
-	return queryBlockBatch(ctx, client, apiKey, hosts, "task/create/pollute")
+func queryPollutionBatch(client *http.Client, apiKey string, hosts []string) (map[string]int, error) {
+	return queryBlockBatch(client, apiKey, hosts, "task/create/pollute")
 }
 
-func queryWechatBatch(ctx context.Context, client *http.Client, apiKey string, hosts []string) (map[string]int, error) {
-	return queryBlockBatch(ctx, client, apiKey, hosts, "task/create/wechat")
+func queryWechatBatch(client *http.Client, apiKey string, hosts []string) (map[string]int, error) {
+	return queryBlockBatch(client, apiKey, hosts, "task/create/wechat")
 }
 
-func queryBlacklistBatch(ctx context.Context, client *http.Client, apiKey string, hosts []string) (map[string]int, error) {
-	return queryBlockBatch(ctx, client, apiKey, hosts, "task/create/blacklist")
+func queryBlacklistBatch(client *http.Client, apiKey string, hosts []string) (map[string]int, error) {
+	return queryBlockBatch(client, apiKey, hosts, "task/create/blacklist")
 }
 
-func queryWallBatch(ctx context.Context, client *http.Client, apiKey string, hosts []string) (map[string]int, error) {
-	return queryBlockBatch(ctx, client, apiKey, hosts, "task/create/wall")
+func queryWallBatch(client *http.Client, apiKey string, hosts []string) (map[string]int, error) {
+	return queryBlockBatch(client, apiKey, hosts, "task/create/wall")
 }
 
-func queryICP(ctx context.Context, client *http.Client, apiKey string, host string) (boceICPInfo, error) {
+func queryICP(client *http.Client, apiKey string, host string) (boceICPInfo, error) {
 	endpoint, err := url.Parse(boceBaseURL + "task/create/icp")
 	if err != nil {
 		return boceICPInfo{}, err
@@ -91,11 +85,7 @@ func queryICP(ctx context.Context, client *http.Client, apiKey string, host stri
 	setBoceTaskQuery(query, apiKey, host)
 	endpoint.RawQuery = query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
-	if err != nil {
-		return boceICPInfo{}, err
-	}
-	resp, err := client.Do(req)
+	resp, err := client.Get(endpoint.String())
 	if err != nil {
 		return boceICPInfo{}, err
 	}
@@ -126,7 +116,7 @@ func queryICP(ctx context.Context, client *http.Client, apiKey string, host stri
 	return boceICPInfo{}, fmt.Errorf("响应缺少备案结果")
 }
 
-func queryBlockBatch(ctx context.Context, client *http.Client, apiKey string, hosts []string, taskPath string) (map[string]int, error) {
+func queryBlockBatch(client *http.Client, apiKey string, hosts []string, taskPath string) (map[string]int, error) {
 	endpoint, err := url.Parse(boceBaseURL + taskPath)
 	if err != nil {
 		return nil, err
@@ -136,11 +126,7 @@ func queryBlockBatch(ctx context.Context, client *http.Client, apiKey string, ho
 	setBoceTaskQuery(query, apiKey, strings.Join(hosts, ","))
 	endpoint.RawQuery = query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := client.Do(req)
+	resp, err := client.Get(endpoint.String())
 	if err != nil {
 		return nil, err
 	}
