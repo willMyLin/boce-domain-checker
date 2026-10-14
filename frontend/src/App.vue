@@ -339,12 +339,13 @@ async function startDetection() {
   }
 }
 
-function stopDetection() {
+async function stopDetection() {
   if (!running.value) {
     notice.value = '当前没有运行中的检测任务'
     return
   }
-  notice.value = '暂不支持中断，检测会继续到完成'
+  await CancelDetection()
+  notice.value = '已发送停止请求'
 }
 
 async function exportExcel() {
