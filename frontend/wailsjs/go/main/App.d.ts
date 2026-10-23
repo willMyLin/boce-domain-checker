@@ -7,6 +7,8 @@ export function BuildMenu():Promise<menu.Menu>;
 
 export function CancelDetection():Promise<boolean>;
 
+export function CheckUpdate():Promise<main.UpdateInfo>;
+
 export function ExportPollutionExcel(arg1:Array<main.DetectRow>):Promise<main.ExportResponse>;
 
 export function GetVersion():Promise<string>;
@@ -14,6 +16,8 @@ export function GetVersion():Promise<string>;
 export function ImportTXT():Promise<main.ImportResponse>;
 
 export function IsDetecting():Promise<boolean>;
+
+export function OpenExternalURL(arg1:string):Promise<void>;
 
 export function StartDetection(arg1:main.DetectRequest):Promise<main.DetectResponse>;
 

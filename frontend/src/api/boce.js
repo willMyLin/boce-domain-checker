@@ -1,8 +1,10 @@
 import {
   CancelDetection as wailsCancelDetection,
+  CheckUpdate as wailsCheckUpdate,
   ExportPollutionExcel as wailsExportPollutionExcel,
   GetVersion as wailsGetVersion,
   ImportTXT as wailsImportTXT,
+  OpenExternalURL as wailsOpenExternalURL,
   StartDetection as wailsStartDetection,
   ValidateTargets as wailsValidateTargets,
 } from '../../wailsjs/go/main/App'
@@ -320,4 +322,30 @@ export function ValidateTargets(text) {
     invalid: invalidTargets,
     message: '',
   })
+}
+
+export function CheckUpdate() {
+  if (hasWailsBridge()) {
+    return wailsCheckUpdate()
+  }
+
+  // 开发预览给一份「没有更新」的结果，免得每次都弹窗打断看界面。
+  return Promise.resolve({
+    current: 'dev',
+    latest: 'v0.0.0',
+    hasUpdate: false,
+    releaseUrl: 'https://github.com/willMyLin/boce-domain-checker/releases/latest',
+    notes: '',
+    source: 'mock',
+  })
+}
+
+export function OpenExternalURL(link) {
+  if (hasWailsBridge()) {
+    return wailsOpenExternalURL(link)
+  }
+
+  // 开发预览没有 Go 后端：直接开新标签，行为最接近「前往下载」。
+  window.open(link, '_blank', 'noopener')
+  return Promise.resolve()
 }

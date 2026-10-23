@@ -31,6 +31,48 @@ func NewApp() *App {
 // so we can call the runtime methods.
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	// 启动后后台静默查一次更新。放 goroutine 是因为检查更新绝不该拖慢启动或卡住界面；
+	// 查不到、查失败一律吞掉 —— 用户没点「检查更新」，就不该被网络状况打扰。
+	go a.autoCheckUpdate(ctx)
+}
+
+// autoCheckUpdate 启动时的静默检查：只有真有新版本才推事件给界面弹窗。
+func (a *App) autoCheckUpdate(ctx context.Context) {
+	checkCtx, cancel := context.WithTimeout(ctx, updateCheckTimeout)
+	defer cancel()
+
+	info, err := checkUpdate(checkCtx, &http.Client{Timeout: updateCheckTimeout})
+	if err != nil || !info.HasUpdate {
+		return
+	}
+	if a.ctx == nil {
+		return
+	}
+	runtime.EventsEmit(a.ctx, "update:available", info)
+}
+
+// CheckUpdate 供界面「帮助 → 检查更新」调用。手动检查失败会把 error 抛给前端，
+// 由前端提示「检查失败」—— 与启动时的静默失败刻意区分。
+func (a *App) CheckUpdate() (UpdateInfo, error) {
+	ctx := context.Background()
+	if a.ctx != nil {
+		ctx = a.ctx
+	}
+	checkCtx, cancel := context.WithTimeout(ctx, updateCheckTimeout)
+	defer cancel()
+	return checkUpdate(checkCtx, &http.Client{Timeout: updateCheckTimeout})
+}
+
+// OpenExternalURL 用系统浏览器打开外链（「前往下载」按钮走这里）。
+// 只开 http/https，不给任意 scheme —— 前端传进来的字符串不全信。
+func (a *App) OpenExternalURL(link string) {
+	if a.ctx == nil {
+		return
+	}
+	if !strings.HasPrefix(link, "https://") && !strings.HasPrefix(link, "http://") {
+		return
+	}
+	runtime.BrowserOpenURL(a.ctx, link)
 }
 
 // beginDetection 注册一次可取消的检测，返回的 finish 必须在 StartDetection 里 defer，

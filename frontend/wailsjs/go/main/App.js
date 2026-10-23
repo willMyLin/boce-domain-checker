@@ -10,6 +10,10 @@ export function CancelDetection() {
   return window['go']['main']['App']['CancelDetection']();
 }
 
+export function CheckUpdate() {
+  return window['go']['main']['App']['CheckUpdate']();
+}
+
 export function ExportPollutionExcel(arg1) {
   return window['go']['main']['App']['ExportPollutionExcel'](arg1);
 }
@@ -24,6 +28,10 @@ export function ImportTXT() {
 
 export function IsDetecting() {
   return window['go']['main']['App']['IsDetecting']();
+}
+
+export function OpenExternalURL(arg1) {
+  return window['go']['main']['App']['OpenExternalURL'](arg1);
 }
 
 export function StartDetection(arg1) {
