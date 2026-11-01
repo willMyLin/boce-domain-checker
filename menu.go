@@ -20,6 +20,7 @@ const (
 	menuActionClearTargets = "clear-targets"
 	menuActionClearRows    = "clear-rows"
 	menuActionCloseBlocked = "close-blocked"
+	menuActionCheckUpdate  = "check-update"
 )
 
 const (
@@ -145,9 +146,16 @@ func (a *App) buildDesktopWindowMenu() *menu.Menu {
 func (a *App) buildHelpMenu() *menu.Menu {
 	return menu.NewMenuFromItems(
 		menu.Text("BOCE 开放平台（申请 API Key）", nil, a.openURL(boceAPIURL)),
+		menu.Text("检查更新", nil, a.onCheckUpdate),
 		menu.Separator(),
 		menu.Text(aboutDialogTitle, nil, a.onAbout),
 	)
+}
+
+// onCheckUpdate 只发个动作给前端，检查本身在前端调 CheckUpdate 做。
+// 这样手动检查的结果/失败提示走前端弹窗，与启动时静默推的「发现新版本」共用一套界面。
+func (a *App) onCheckUpdate(*menu.CallbackData) {
+	a.emitMenuAction(menuActionCheckUpdate)
 }
 
 // act 返回转发到前端的菜单处理器。

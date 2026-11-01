@@ -169,6 +169,28 @@ export namespace main {
 	        this.canceled = source["canceled"];
 	    }
 	}
+	export class UpdateInfo {
+	    current: string;
+	    latest: string;
+	    hasUpdate: boolean;
+	    releaseUrl: string;
+	    notes: string;
+	    source: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.current = source["current"];
+	        this.latest = source["latest"];
+	        this.hasUpdate = source["hasUpdate"];
+	        this.releaseUrl = source["releaseUrl"];
+	        this.notes = source["notes"];
+	        this.source = source["source"];
+	    }
+	}
 	export class ValidateTargetsResponse {
 	    valid: string[];
 	    invalid: string[];

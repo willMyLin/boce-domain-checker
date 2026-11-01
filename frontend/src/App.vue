@@ -2,8 +2,10 @@
 import {computed, onMounted, onUnmounted, reactive, ref} from 'vue'
 import {
   CancelDetection,
+  CheckUpdate,
   ExportPollutionExcel,
   ImportTXT,
+  OpenExternalURL,
   StartDetection,
   ValidateTargets,
 } from './api/boce'
@@ -16,6 +18,12 @@ const running = ref(false)
 const notice = ref('')
 const exportPath = ref('')
 const progress = ref(0)
+
+// 更新检查：updateInfo 非空时弹窗。updateCheckError 只在手动检查失败时填，
+// 启动时的静默检查失败不进这里（用户没点，不该被打扰）。
+const updateInfo = ref(null)
+const updateCheckError = ref('')
+const updateChecking = ref(false)
 const streamTotal = ref(0)
 const importedTargets = ref([])
 const targetText = ref('')
@@ -176,6 +184,7 @@ function upsertRow(row) {
 let unlistenDetectStart = null
 let unlistenDetectRow = null
 let unlistenMenuAction = null
+let unlistenUpdateAvailable = null
 
 onMounted(() => {
   if (!window.runtime?.EventsOnMultiple) {
@@ -193,6 +202,13 @@ onMounted(() => {
     upsertRow(row)
   })
   unlistenMenuAction = EventsOn('menu:action', handleMenuAction)
+  // 启动时 Go 侧静默查到新版本才推这个事件，这里只负责弹窗。
+  unlistenUpdateAvailable = EventsOn('update:available', info => {
+    if (info?.hasUpdate) {
+      updateInfo.value = info
+      updateCheckError.value = ''
+    }
+  })
 })
 
 onUnmounted(() => {
@@ -204,6 +220,9 @@ onUnmounted(() => {
   }
   if (unlistenMenuAction) {
     unlistenMenuAction()
+  }
+  if (unlistenUpdateAvailable) {
+    unlistenUpdateAvailable()
   }
 })
 
@@ -235,9 +254,53 @@ function handleMenuAction(action) {
     case 'close-blocked':
       notice.value = '检测进行中，已阻止退出；请先停止检测'
       break
+    case 'check-update':
+      runUpdateCheck()
+      break
     default:
       break
   }
+}
+
+// runUpdateCheck —— 手动「检查更新」。与启动时的静默检查刻意区分：
+// 这里没更新也弹「已是最新」，失败也要告诉用户，不能一声不吭。
+async function runUpdateCheck() {
+  if (updateChecking.value) {
+    return
+  }
+  updateChecking.value = true
+  updateCheckError.value = ''
+  try {
+    const info = await CheckUpdate()
+    if (info?.hasUpdate) {
+      updateInfo.value = info
+    } else {
+      updateInfo.value = {
+        ...(info || {}),
+        hasUpdate: false,
+        latest: info?.latest || '',
+        current: info?.current || '',
+      }
+    }
+  } catch (err) {
+    updateCheckError.value = err?.message || String(err)
+    updateInfo.value = null
+  } finally {
+    updateChecking.value = false
+  }
+}
+
+function closeUpdateDialog() {
+  updateInfo.value = null
+  updateCheckError.value = ''
+}
+
+function openReleasePage() {
+  const link = updateInfo.value?.releaseUrl
+  if (link) {
+    OpenExternalURL(link)
+  }
+  closeUpdateDialog()
 }
 
 function clearTargets() {
@@ -485,5 +548,50 @@ async function exportExcel() {
         <span v-if="notice" class="notice">{{ notice }}</span>
       </div>
     </footer>
+
+    <!-- 更新提示：只有 Go 侧查到新版本，或用户手动点了「检查更新」才出现 -->
+    <div
+      v-if="updateInfo || updateCheckError"
+      class="update-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="检查更新"
+      @click.self="closeUpdateDialog"
+    >
+      <div class="update-dialog">
+        <template v-if="updateCheckError">
+          <h2 class="update-title">检查更新失败</h2>
+          <p class="update-line">请检查网络后重试。</p>
+          <p class="update-error">{{ updateCheckError }}</p>
+          <div class="update-actions">
+            <button type="button" class="win-button" @click="closeUpdateDialog">知道了</button>
+          </div>
+        </template>
+
+        <template v-else-if="updateInfo?.hasUpdate">
+          <h2 class="update-title">发现新版本</h2>
+          <dl class="update-versions">
+            <div><dt>当前</dt><dd>{{ updateInfo.current }}</dd></div>
+            <div><dt>最新</dt><dd class="update-latest">{{ updateInfo.latest }}</dd></div>
+          </dl>
+          <p v-if="updateInfo.notes" class="update-notes">{{ updateInfo.notes }}</p>
+          <div class="update-actions">
+            <button type="button" class="win-button win-button-primary" @click="openReleasePage">前往下载</button>
+            <button type="button" class="win-button" @click="closeUpdateDialog">稍后</button>
+          </div>
+        </template>
+
+        <template v-else>
+          <h2 class="update-title">已是最新版本</h2>
+          <p class="update-line">
+            当前版本 <strong>{{ updateInfo?.current || '未知' }}</strong>
+            <template v-if="updateInfo?.latest">，最新版本 {{ updateInfo.latest }}</template>
+          </p>
+          <div class="update-actions">
+            <button type="button" class="win-button" @click="closeUpdateDialog">知道了</button>
+          </div>
+        </template>
+      </div>
+    </div>
   </main>
 </template>

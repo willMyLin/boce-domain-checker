@@ -416,3 +416,99 @@ button {
     text-overflow: ellipsis;
   }
 }
+
+/* ---- 检查更新弹窗 ---- */
+/* 遮罩铺满，点击遮罩空白处关闭（@click.self 在模板上）。 */
+.update-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.update-dialog {
+  box-sizing: border-box;
+  width: min(420px, calc(100vw - 40px));
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  padding: 18px 20px 16px;
+  border: 1px solid #a9a9a9;
+  background: #f0f0f0;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+}
+
+.update-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.update-line {
+  margin: 0 0 10px;
+  line-height: 1.7;
+}
+
+.update-error {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border: 1px solid #d0a0a0;
+  background: #f7eaea;
+  color: #7a2222;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.update-versions {
+  margin: 0 0 12px;
+}
+
+.update-versions > div {
+  display: flex;
+  gap: 10px;
+  line-height: 1.9;
+}
+
+.update-versions dt {
+  width: 36px;
+  color: #555;
+}
+
+.update-versions dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.update-latest {
+  color: #0078d7;
+}
+
+.update-notes {
+  max-height: 140px;
+  overflow: auto;
+  margin: 0 0 14px;
+  padding: 8px 10px;
+  border: 1px solid #cfcfcf;
+  background: #fff;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.update-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 主按钮给个默认焦点蓝边，跟系统对话框的「确定」一致。 */
+.win-button-primary {
+  border-color: #0078d7;
+  background: #e5f1fb;
+}
+
+.win-button-primary:hover:not(:disabled) {
+  background: #cce4f7;
+}
