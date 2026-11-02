@@ -22,7 +22,7 @@ export namespace main {
 	export class DetectRequest {
 	    apiKey: string;
 	    enablePollution: boolean;
-	    enableHijack: boolean;
+	    enableQQ: boolean;
 	    enableWechat: boolean;
 	    enableIcp: boolean;
 	    enableBlacklist: boolean;
@@ -39,7 +39,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.apiKey = source["apiKey"];
 	        this.enablePollution = source["enablePollution"];
-	        this.enableHijack = source["enableHijack"];
+	        this.enableQQ = source["enableQQ"];
 	        this.enableWechat = source["enableWechat"];
 	        this.enableIcp = source["enableIcp"];
 	        this.enableBlacklist = source["enableBlacklist"];

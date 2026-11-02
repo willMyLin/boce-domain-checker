@@ -206,7 +206,7 @@ func (a *App) StartDetection(req DetectRequest) DetectResponse {
 	defer detecting.Store(false)
 
 	req.APIKey = strings.TrimSpace(req.APIKey)
-	if !req.EnablePollution && !req.EnableHijack && !req.EnableWechat && !req.EnableICP && !req.EnableBlacklist && !req.EnableWall {
+	if !req.EnablePollution && !req.EnableQQ && !req.EnableWechat && !req.EnableICP && !req.EnableBlacklist && !req.EnableWall {
 		return DetectResponse{
 			Summary:  DetectSummary{},
 			Progress: 100,
@@ -218,7 +218,7 @@ func (a *App) StartDetection(req DetectRequest) DetectResponse {
 		response := makeMockDetectionResponse(
 			fmt.Sprintf("未填写有效 API Key，返回测试数据，并发 %d，超时 %d 秒", req.Concurrency, req.TimeoutSeconds),
 			req.EnablePollution,
-			req.EnableHijack,
+			req.EnableQQ,
 			req.EnableWechat,
 			req.EnableICP,
 			req.EnableBlacklist,
@@ -267,7 +267,7 @@ func (a *App) StartDetection(req DetectRequest) DetectResponse {
 	if req.EnablePollution {
 		rows = append(rows, runPollutionDetection(ctx, client, req.APIKey, targets, concurrency, len(rows), emitRow)...)
 	}
-	if req.EnableHijack {
+	if req.EnableQQ {
 		rows = append(rows, runQQDetection(ctx, client, req.APIKey, targets, concurrency, len(rows), emitRow)...)
 	}
 	if req.EnableWechat {
@@ -284,7 +284,7 @@ func (a *App) StartDetection(req DetectRequest) DetectResponse {
 	}
 
 	summary := summarizeRows(rows)
-	message := detectionMessage(req.EnablePollution, req.EnableHijack, req.EnableWechat, req.EnableICP, req.EnableBlacklist, req.EnableWall, concurrency, timeout)
+	message := detectionMessage(req.EnablePollution, req.EnableQQ, req.EnableWechat, req.EnableICP, req.EnableBlacklist, req.EnableWall, concurrency, timeout)
 	if ctx.Err() != nil {
 		message = "已中止，" + message
 	}
