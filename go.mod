@@ -10,7 +10,7 @@ toolchain go1.26.10
 
 require (
 	github.com/wailsapp/wails/v2 v2.16.0
-	golang.org/x/net v0.61.0
+	golang.org/x/net v0.62.0
 )
 
 require (
