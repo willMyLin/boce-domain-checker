@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, onUnmounted, reactive, ref} from 'vue'
+import {computed, onMounted, onUnmounted, reactive, ref, watch} from 'vue'
 import {
   CancelDetection,
   CheckUpdate,
@@ -8,6 +8,8 @@ import {
   OpenExternalURL,
   StartDetection,
   ValidateTargets,
+  getStoredApiKey,
+  setStoredApiKey,
 } from './api/boce'
 import {ClipboardSetText, EventsOn} from '../wailsjs/runtime/runtime'
 import {ABNORMAL_STATUSES, STATUS_BAD_DOMAIN, STATUS_BLACKLISTED, STATUS_FAILED, STATUS_FILED, STATUS_INTERCEPTED, STATUS_LIST, STATUS_NORMAL, STATUS_POLLUTION, STATUS_SUSPECT_WALLED, STATUS_UNFILED, STATUS_UNREGISTERED, STATUS_UNKNOWN, STATUS_WALLED} from './lib/constants'
@@ -31,11 +33,18 @@ const targetError = ref('')
 const statusFilter = ref('all')
 
 const form = reactive({
-  apiKey: '',
+  apiKey: getStoredApiKey(),
   detectionType: 'pollution',
   concurrency: 10,
   timeoutSeconds: 60,
 })
+
+watch(
+  () => form.apiKey,
+  (val) => {
+    setStoredApiKey(val)
+  }
+)
 
 const summary = reactive({
   total: 0,
