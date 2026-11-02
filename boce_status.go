@@ -164,7 +164,7 @@ func expectedDetectRows(req DetectRequest, targetCount int) int {
 	if req.EnablePollution {
 		checks++
 	}
-	if req.EnableHijack {
+	if req.EnableQQ {
 		checks++
 	}
 	if req.EnableWechat {

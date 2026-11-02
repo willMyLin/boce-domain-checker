@@ -380,7 +380,7 @@ async function startDetection() {
     const result = await StartDetection({
       apiKey: form.apiKey,
       enablePollution: form.detectionType === 'pollution',
-      enableHijack: form.detectionType === 'qq',
+      enableQQ: form.detectionType === 'qq',
       enableWechat: form.detectionType === 'wechat',
       enableIcp: form.detectionType === 'icp',
       enableBlacklist: form.detectionType === 'blacklist',

@@ -3,7 +3,7 @@ package main
 type DetectRequest struct {
 	APIKey          string   `json:"apiKey"`
 	EnablePollution bool     `json:"enablePollution"`
-	EnableHijack    bool     `json:"enableHijack"`
+	EnableQQ        bool     `json:"enableQQ"`
 	EnableWechat    bool     `json:"enableWechat"`
 	EnableICP       bool     `json:"enableIcp"`
 	EnableBlacklist bool     `json:"enableBlacklist"`

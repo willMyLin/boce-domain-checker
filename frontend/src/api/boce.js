@@ -63,7 +63,7 @@ function makeRows(targets = mockTargets, request = {}) {
       })
     })
   }
-  if (request.enableHijack) {
+  if (request.enableQQ) {
     targets.forEach((target, index) => {
       rows.push({
         id: rows.length + 1,
@@ -138,7 +138,7 @@ function makeRows(targets = mockTargets, request = {}) {
 }
 
 function summarizeRows(rows, request) {
-  if (request.enablePollution && !request.enableHijack && !request.enableWechat && !request.enableIcp && !request.enableBlacklist && !request.enableWall) {
+  if (request.enablePollution && !request.enableQQ && !request.enableWechat && !request.enableIcp && !request.enableBlacklist && !request.enableWall) {
     return {
       total: 93874,
       checked: 93874,
