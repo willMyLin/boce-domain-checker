@@ -349,3 +349,24 @@ export function OpenExternalURL(link) {
   window.open(link, '_blank', 'noopener')
   return Promise.resolve()
 }
+
+export const STORAGE_KEY_API_KEY = 'boce_api_key'
+
+export function getStoredApiKey() {
+  try {
+    return localStorage.getItem(STORAGE_KEY_API_KEY) || ''
+  } catch (_) {
+    return ''
+  }
+}
+
+export function setStoredApiKey(key) {
+  try {
+    const val = (key || '').trim()
+    if (val) {
+      localStorage.setItem(STORAGE_KEY_API_KEY, val)
+    } else {
+      localStorage.removeItem(STORAGE_KEY_API_KEY)
+    }
+  } catch (_) {}
+}
