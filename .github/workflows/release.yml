@@ -45,6 +45,9 @@ jobs:
       - name: 安装 wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_CLI_VERSION}
 
+      - name: 安装 create-dmg
+        run: brew install create-dmg
+
       - name: 构建 + 打包两个 macOS 平台（zip + DMG）
         run: make VERSION="${GITHUB_REF_NAME}" package-darwin
 
