@@ -123,10 +123,10 @@ package-darwin: build-darwin-arm64 build-darwin-amd64 ## 打包两个 macOS 平�
 	mkdir -p $(RELEASE)
 	rm -f $(RELEASE)/boce_tool_app_darwin_arm64.zip $(RELEASE)/boce_tool_app_darwin_arm64.dmg
 	(cd $(STAGE)/darwin-arm64 && zip -ry $(CURDIR)/$(RELEASE)/boce_tool_app_darwin_arm64.zip Boce.app fix_mac_quarantine.sh)
-	hdiutil create -volname "BOCE 检测工具" -srcfolder $(STAGE)/darwin-arm64 -ov -format UDZO $(RELEASE)/boce_tool_app_darwin_arm64.dmg
+	./scripts/build_dmg.sh "BOCE 检测工具" $(STAGE)/darwin-arm64 $(RELEASE)/boce_tool_app_darwin_arm64.dmg
 	rm -f $(RELEASE)/boce_tool_app_darwin_amd64.zip $(RELEASE)/boce_tool_app_darwin_amd64.dmg
 	(cd $(STAGE)/darwin-amd64 && zip -ry $(CURDIR)/$(RELEASE)/boce_tool_app_darwin_amd64.zip Boce.app fix_mac_quarantine.sh)
-	hdiutil create -volname "BOCE 检测工具" -srcfolder $(STAGE)/darwin-amd64 -ov -format UDZO $(RELEASE)/boce_tool_app_darwin_amd64.dmg
+	./scripts/build_dmg.sh "BOCE 检测工具" $(STAGE)/darwin-amd64 $(RELEASE)/boce_tool_app_darwin_amd64.dmg
 
 package-windows: build-windows-amd64 ## 打包 Windows 平台（zip）
 	mkdir -p $(RELEASE)
