@@ -18,7 +18,7 @@ env:
   # vite 构建会 OOM，必须放开 heap
   NODE_OPTIONS: "--max-old-space-size=4096"
   # wails CLI 钉死版本，不要用 @latest
-  WAILS_CLI_VERSION: v2.16.0
+  WAILS_CLI_VERSION: v2.17.1
 
 jobs:
   darwin:

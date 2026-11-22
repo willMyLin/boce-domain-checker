@@ -4,24 +4,26 @@ go 1.26.0
 
 // toolchain 钉住 Go 补丁版本：crypto/tls、crypto/x509、net/http 有 govulncheck
 // 可达漏洞（本应用用 HTTPS 调 BOCE API，是真实触达路径）。go1.26.1 → 1.26.6 →
-// 1.26.9 → 1.26.10 各修一批（1.26.10 修 GO-2026-6809：crypto/x509 不再信任被
-// 污染的中间证书），新漏洞会持续出现；升补丁版本时同步改这里，并重跑 make audit。
-toolchain go1.26.10
+// 1.26.9 → 1.26.10 → 1.26.11 各修一批（1.26.10 修 GO-2026-6809：crypto/x509 不再
+// 信任被污染的中间证书；1.26.11 修 GO-2026-6859：net/http 的 MaxBytesReader 竞态），
+// 新漏洞会持续出现；升补丁版本时同步改这里，并重跑 make audit。
+toolchain go1.26.11
 
 require (
-	github.com/wailsapp/wails/v2 v2.16.0
+	github.com/wailsapp/wails/v2 v2.17.1
 	golang.org/x/net v0.62.0
 )
 
 require (
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jchv/go-winloader v0.0.0-20250406163304-c1995be93bd1 // indirect
-	github.com/labstack/echo/v4 v4.15.4 // indirect
+	github.com/labstack/echo/v4 v4.16.1 // indirect
 	github.com/labstack/gommon v0.5.0 // indirect
 	github.com/leaanthony/go-ansi-parser v1.6.1 // indirect
 	github.com/leaanthony/gosod v1.0.4 // indirect
@@ -37,7 +39,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.23 // indirect
-	github.com/wailsapp/mimetype v1.4.1 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
