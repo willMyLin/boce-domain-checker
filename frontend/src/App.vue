@@ -169,20 +169,53 @@ function applySummary(nextSummary) {
   Object.assign(summary, nextSummary)
 }
 
-function upsertRow(row) {
-  if (!row || !row.id) {
+// mergeRows 线性归并两个按 id 升序的行列表。后端按批推送结果，每批只做一次
+// O(n) 合并，避免逐行 findIndex + sort 在万级数据下退化成 O(n²)。
+function mergeRows(current, incoming) {
+  const merged = []
+  let left = 0
+  let right = 0
+
+  while (left < current.length && right < incoming.length) {
+    if (current[left].id < incoming[right].id) {
+      merged.push(current[left])
+      left += 1
+    } else if (current[left].id > incoming[right].id) {
+      merged.push(incoming[right])
+      right += 1
+    } else {
+      merged.push(incoming[right])
+      left += 1
+      right += 1
+    }
+  }
+  while (left < current.length) {
+    merged.push(current[left])
+    left += 1
+  }
+  while (right < incoming.length) {
+    merged.push(incoming[right])
+    right += 1
+  }
+
+  return merged
+}
+
+function upsertRows(incoming) {
+  if (!Array.isArray(incoming) || incoming.length === 0) {
     return
   }
 
-  const existingIndex = rows.value.findIndex(item => item.id === row.id)
-  if (existingIndex >= 0) {
-    rows.value.splice(existingIndex, 1, row)
-  } else {
-    rows.value.push(row)
-    rows.value.sort((left, right) => left.id - right.id)
+  const batch = incoming
+    .filter(row => row && row.id)
+    .sort((left, right) => left.id - right.id)
+  if (batch.length === 0) {
+    return
   }
-  if (!selectedId.value) {
-    selectedId.value = row.id
+
+  rows.value = mergeRows(rows.value, batch)
+  if (!selectedId.value && rows.value.length > 0) {
+    selectedId.value = rows.value[0].id
   }
   if (streamTotal.value > 0) {
     progress.value = Math.min(100, Math.round((rows.value.length / streamTotal.value) * 100))
@@ -191,7 +224,7 @@ function upsertRow(row) {
 }
 
 let unlistenDetectStart = null
-let unlistenDetectRow = null
+let unlistenDetectRows = null
 let unlistenMenuAction = null
 let unlistenUpdateAvailable = null
 
@@ -207,8 +240,8 @@ onMounted(() => {
     selectedId.value = null
     keepValidStatusFilter()
   })
-  unlistenDetectRow = EventsOn('detect:row', row => {
-    upsertRow(row)
+  unlistenDetectRows = EventsOn('detect:rows', incomingRows => {
+    upsertRows(incomingRows)
   })
   unlistenMenuAction = EventsOn('menu:action', handleMenuAction)
   // 启动时 Go 侧静默查到新版本才推这个事件，这里只负责弹窗。
@@ -224,8 +257,8 @@ onUnmounted(() => {
   if (unlistenDetectStart) {
     unlistenDetectStart()
   }
-  if (unlistenDetectRow) {
-    unlistenDetectRow()
+  if (unlistenDetectRows) {
+    unlistenDetectRows()
   }
   if (unlistenMenuAction) {
     unlistenMenuAction()
