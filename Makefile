@@ -12,7 +12,7 @@
 .DEFAULT_GOAL := help
 
 # wails CLI 钉死版本，不要用 @latest —— 会与 go.mod 的 wails 模块版本漂移。
-WAILS_VERSION      := v2.16.0
+WAILS_VERSION      := v2.17.1
 GOVULNCHECK_VERSION := v1.8.0
 
 .PHONY: help deps-go deps-fe frontend vet test lint audit fmt check dev clean
