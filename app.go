@@ -97,11 +97,15 @@ func (a *App) emitDetectStart(total int) {
 	runtime.EventsEmit(a.ctx, "detect:start", DetectStartEvent{Total: total})
 }
 
-func (a *App) emitDetectRow(row DetectRow) {
-	if a.ctx == nil {
-		return
-	}
-	runtime.EventsEmit(a.ctx, "detect:row", row)
+// newDetectRowBatcher 创建逐行结果的攒批发射器。大批量检测时逐行 EventsEmit
+// 会产生数万次跨端调用，界面会被高频消息拖垮。
+func (a *App) newDetectRowBatcher() *detectRowBatcher {
+	return newDetectRowBatcher(func(rows []DetectRow) {
+		if a.ctx == nil {
+			return
+		}
+		runtime.EventsEmit(a.ctx, "detect:rows", rows)
+	})
 }
 
 // Version 由构建时 -ldflags "-X main.Version=<ver>" 注入；未注入（开发态）时为 "dev"。
@@ -225,9 +229,11 @@ func (a *App) StartDetection(req DetectRequest) DetectResponse {
 			req.EnableWall,
 		)
 		a.emitDetectStart(len(response.Rows))
+		batcher := a.newDetectRowBatcher()
 		for _, row := range response.Rows {
-			a.emitDetectRow(row)
+			batcher.Add(row)
 		}
+		batcher.Close()
 		return response
 	}
 
@@ -262,7 +268,9 @@ func (a *App) StartDetection(req DetectRequest) DetectResponse {
 
 	expectedRows := expectedDetectRows(req, len(targets))
 	a.emitDetectStart(expectedRows)
-	emitRow := a.emitDetectRow
+	batcher := a.newDetectRowBatcher()
+	defer batcher.Close()
+	emitRow := batcher.Add
 	rows := make([]DetectRow, 0, len(targets)*6)
 	if req.EnablePollution {
 		rows = append(rows, runPollutionDetection(ctx, client, req.APIKey, targets, concurrency, len(rows), emitRow)...)
